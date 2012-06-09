@@ -14,7 +14,7 @@ use Data::Dumper;
 my $curl       = WWW::Curl::Easy->new;
 my $api_key    = "fc8ebcbc6bfec2cf047b3c163f5682eb";
 my $api_secret = "b57a5629f48d691ac178dc6b02ca58f5";
-my $api_token;
+my ($api_token, $session_key);
 
 # CURL basic settings
 $curl->setopt(CURLOPT_CONNECTTIMEOUT, 10);
@@ -28,6 +28,8 @@ sub auth_user {
     <>;
 
     auth_getSession();
+
+    say $session_key;
 }
 
 sub auth_getToken {
@@ -56,7 +58,7 @@ sub auth_getSession {
     $curl->setopt(CURLOPT_WRITEDATA, \$response);
     $curl->perform;
 
-    say Dumper decode_json($response);
+    $session_key = decode_json($response)->{"key"} if defined ;
 }
 
 sub api_signature {
