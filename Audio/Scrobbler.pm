@@ -1,56 +1,46 @@
 package Audio::Scrobbler;
 
 use Exporter 'import';
-@EXPORT_OK = qw(auth_user);
+@EXPORT_OK = qw(auth_getToken auth_getSession);
 
 use strict;
 use warnings;
-use 5.01;
 use JSON::XS;
 use WWW::Curl::Easy;
 use Digest::MD5 qw( md5_hex );
-use Data::Dumper;
 
-my $curl       = WWW::Curl::Easy->new;
-my $api_key    = "fc8ebcbc6bfec2cf047b3c163f5682eb";
-my $api_secret = "b57a5629f48d691ac178dc6b02ca58f5";
-my ($api_token, $session_key);
+my $curl = WWW::Curl::Easy->new;
 
 # CURL basic settings
 $curl->setopt(CURLOPT_CONNECTTIMEOUT, 10);
 $curl->setopt(CURLOPT_TIMEOUT, 30);
 
-sub auth_user {
-    auth_getToken();
-
-    say "auth url: http://www.last.fm/api/auth/?api_key=$api_key&token=$api_token" if $api_token;
-    print "\nPress [Enter] to continue...";
-    <>;
-
-    auth_getSession();
-
-    say $session_key;
-}
-
 sub auth_getToken {
-    say "auth.getToken";
-
+    my ($api_key) = @_;
     my $response;
+
     $curl->setopt(CURLOPT_URL, &api_url({ method => "auth.getToken", api_key => $api_key }));
     $curl->setopt(CURLOPT_WRITEDATA, \$response);
     $curl->perform;
 
-    $api_token = decode_json($response)->{"token"};
+    return decode_json($response)->{"token"} if defined decode_json($response)->{"token"};
+    return 0;
 }
 
 sub auth_getSession {
-    say "auth.getSession";
+    my ($api_key, $api_secret, $api_token) = @_;
+
+    my $sig_params = {
+        api_key => $api_key,
+        method  => "auth.getSession",
+        token   => $api_token
+    };
 
     my $url_options = {
         method  => "auth.getSession",
         api_key => $api_key,
-        api_sig => api_signature("auth.getSession"),
-        token   => $api_token
+        token   => $api_token,
+        api_sig => &api_signature($sig_params, $api_secret)
     };
 
     my $response;
@@ -58,13 +48,18 @@ sub auth_getSession {
     $curl->setopt(CURLOPT_WRITEDATA, \$response);
     $curl->perform;
 
-    $session_key = decode_json($response)->{"key"} if defined ;
+    if ( defined decode_json($response)->{"session"} ) {
+        return decode_json($response)->{"session"}->{"key"};
+    }
+
+    return decode_json($response);
 }
 
 sub api_signature {
-    my ($method) = @_;
+    my ($params, $api_secret) = @_;
+    my $signature = join("", map { $_ . $params->{$_} } sort keys %$params);
 
-    return md5_hex( join("", "api_key", $api_key, "method", $method, "token", $api_token, $api_secret) );
+    return md5_hex( $signature . $api_secret );
 }
 
 sub api_url {
