@@ -1,7 +1,11 @@
 package Audio::Scrobbler;
 
 use Exporter 'import';
-@EXPORT_OK = qw(auth_getToken auth_getSession);
+@EXPORT_OK = qw(
+    auth_getToken
+    auth_getSession
+    track_updateNowPlaying
+);
 
 use strict;
 use warnings;
@@ -11,17 +15,9 @@ use Digest::MD5 qw( md5_hex );
 
 my $curl = WWW::Curl::Easy->new;
 
-# CURL basic settings
-$curl->setopt(CURLOPT_CONNECTTIMEOUT, 10);
-$curl->setopt(CURLOPT_TIMEOUT, 30);
-
 sub auth_getToken {
     my ($api_key) = @_;
-    my $response;
-
-    $curl->setopt(CURLOPT_URL, &api_url({ method => "auth.getToken", api_key => $api_key }));
-    $curl->setopt(CURLOPT_WRITEDATA, \$response);
-    $curl->perform;
+    my $response = &send_request(&api_url({ method => "auth.getToken", api_key => $api_key }));
 
     return decode_json($response)->{"token"} if defined decode_json($response)->{"token"};
     return 0;
@@ -43,14 +39,36 @@ sub auth_getSession {
         api_sig => &api_signature($sig_params, $api_secret)
     };
 
-    my $response;
-    $curl->setopt(CURLOPT_URL, &api_url($url_options));
-    $curl->setopt(CURLOPT_WRITEDATA, \$response);
-    $curl->perform;
+    my $response = &send_request(&api_url($url_options));
 
     if ( defined decode_json($response)->{"session"} ) {
         return decode_json($response)->{"session"}->{"key"};
     }
+
+    return decode_json($response);
+}
+
+sub track_updateNowPlaying {
+    my ($track, $artist, $api_key, $api_secret, $api_session) = @_;
+
+    my $sig_params = {
+        track   => $track,
+        artist  => $artist,
+        api_key => $api_key,
+        sk      => $api_session,
+        method  => "track.updateNowPlaying"
+    };
+
+    my $url_options = {
+        track   => $track,
+        artist  => $artist,
+        api_key => $api_key,
+        sk      => $api_session,
+        method  => "track.updateNowPlaying",
+        api_sig => &api_signature($sig_params, $api_secret)
+    };
+
+    my $response = &send_request(&api_url($url_options), "POST");
 
     return decode_json($response);
 }
@@ -68,8 +86,23 @@ sub api_url {
     return join(
         "&",
         "http://ws.audioscrobbler.com/2.0/?format=json",
-        map { join("=", $_, $params->{$_}) } keys(%$params)
+        map { join("=", $_, $params->{$_}) } keys %$params
     );
+}
+
+sub send_request {
+    my ($url, $method) = @_;
+
+    my $response;
+    $curl->setopt(CURLOPT_CONNECTTIMEOUT, 10);
+    $curl->setopt(CURLOPT_TIMEOUT, 30);
+    $curl->setopt(CURLOPT_POST, 1) if $method;
+    $curl->setopt(CURLOPT_URL, $url);
+    $curl->setopt(CURLOPT_WRITEDATA, \$response);
+    $curl->perform;
+    $curl->cleanup;
+
+    return $response;
 }
 
 1;

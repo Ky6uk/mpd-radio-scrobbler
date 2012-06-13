@@ -4,8 +4,13 @@ use 5.01;
 use strict;
 use warnings;
 use Getopt::Std;
-use Audio::Scrobbler qw(auth_getToken auth_getSession);
 use Data::Dumper;
+
+use Audio::Scrobbler qw(
+    auth_getToken
+    auth_getSession
+    track_updateNowPlaying
+);
 
 my $api_key    = "fc8ebcbc6bfec2cf047b3c163f5682eb";
 my $api_secret = "b57a5629f48d691ac178dc6b02ca58f5";
@@ -14,10 +19,11 @@ my $options = {};
 
 getopts('rs:', $options);
 
-if ( $options->{"s"} and $options->{"s"} =~ m/^[0-9a-f]{32}$/ ) {
-    $api_session = $options->{"s"};
+if ( $options->{"s"} ) {
+    ( $options->{"s"} =~ m/^[0-9a-f]{32}$/ ) ?
+        ( $api_session = $options->{"s"} ) :
+        ( die "invalid session string in -s" );
 }
-else { die "invalid session string in -s" }
 
 if ( $options->{"r"} and not $api_session ) {
     my $api_token = auth_getToken($api_key);
@@ -36,3 +42,5 @@ if ( $options->{"r"} and not $api_session ) {
     }
     else { die "auth_getSession() exception: ", Dumper $api_session }
 }
+
+print Dumper track_updateNowPlaying("Nice", "Storyville", $api_key, $api_secret, $api_session) if $api_session;
