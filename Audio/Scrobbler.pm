@@ -11,6 +11,7 @@ use Exporter 'import';
 use strict;
 use warnings;
 use JSON::XS;
+use URI::Escape;
 use WWW::Curl::Easy;
 use Digest::MD5 qw( md5_hex );
 
@@ -43,7 +44,7 @@ sub auth_getSession {
 }
 
 sub track_updateNowPlaying {
-    my ($track, $artist, $api_key, $api_secret, $api_session) = @_;
+    my ($artist, $track, $api_key, $api_secret, $api_session) = @_;
 
     my $sig_params = {
         track   => $track,
@@ -59,7 +60,7 @@ sub track_updateNowPlaying {
 }
 
 sub track_scrobble {
-    my ($track, $artist, $api_key, $api_secret, $api_session) = @_;
+    my ($artist, $track, $api_key, $api_secret, $api_session) = @_;
 
     my $sig_params = {
         track     => $track,
@@ -86,9 +87,9 @@ sub send_request {
     my ($params, $method) = @_;
     my $response;
     my $url = "http://ws.audioscrobbler.com/2.0/";
-    my $fields = join("&", "format=json", map { join("=", $_, $params->{$_}) } keys %$params);
+    my $fields = join("&", "format=json", map { join("=", $_, uri_escape($params->{$_})) } keys %$params);
 
-    if ( $method ) {
+    if ( $method and $method eq "POST" ) {
         $curl->setopt(CURLOPT_POST, 1);
         $curl->setopt(CURLOPT_POSTFIELDS, $fields);
     }
