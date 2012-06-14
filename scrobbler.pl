@@ -15,17 +15,20 @@ use Audio::Scrobbler qw(
     track_scrobble
 );
 
+# user variables
 my $api_key    = "fc8ebcbc6bfec2cf047b3c163f5682eb";
 my $api_secret = "b57a5629f48d691ac178dc6b02ca58f5";
 my $api_session = "";
-my $options = {};
 my $mpd_host = "localhost";
 my $mpd_port = "6600";
 my $update_interval = 10;
 my $scrobble_interval = 90;
+
+# system variables
 my $counter = 0;
 my $scrobbled = 0;
 my $current_track = '';
+my $options = {};
 
 getopts('rhs:', $options);
 

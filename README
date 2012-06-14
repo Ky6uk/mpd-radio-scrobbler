@@ -1,0 +1,14 @@
+Last.fm audio scrobbler for MPD radio streams
+
+(tested on di.fm / sky.fm / jazzradio.com streams)
+
+Requirements:
+
+    Perl 5.10 or above
+
+    Modules:
+        EV
+        JSON::XS
+        WWW::Curl
+        URI::Escape
+        Digest::MD5
