@@ -10,6 +10,7 @@ use Audio::Scrobbler qw(
     auth_getToken
     auth_getSession
     track_updateNowPlaying
+    track_scrobble
 );
 
 my $api_key    = "fc8ebcbc6bfec2cf047b3c163f5682eb";
@@ -43,4 +44,5 @@ if ( $options->{"r"} and not $api_session ) {
     else { die "auth_getSession() exception: ", Dumper $api_session }
 }
 
-print Dumper track_updateNowPlaying("Nice", "Storyville", $api_key, $api_secret, $api_session) if $api_session;
+print Dumper track_updateNowPlaying("Nice Ain't Got Me Nothing", "Storyville", $api_key, $api_secret, $api_session) if $api_session;
+#print Dumper track_scrobble("Nice Ain't Got Me Nothing", "Storyville", $api_key, $api_secret, $api_session) if $api_session;
