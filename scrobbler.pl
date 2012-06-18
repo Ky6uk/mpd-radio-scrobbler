@@ -86,7 +86,7 @@ sub get_track_info {
             next;
         }
 
-        if ( $line =~ m/^songid\:\s+(\d+)$/ ) {
+        if ( $line =~ m/^song\:\s+(\d+)$/ ) {
             $song_id = $1;
             $found = 1;
         }
