@@ -8,8 +8,5 @@ Requirements:
 
     Modules:
         EV
-        JSON::XS
-        WWW::Curl
-        URI::Escape
-        Digest::MD5
+        Audio::Scrobbler2
 
